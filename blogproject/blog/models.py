@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
 class Post(models.Model):
     owner = models.ForeignKey(
-        'User', on_delete=models.CASCADE, related_name="posts", default="user"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts", null=True
     )
     title = models.CharField(max_length=100)
     content = models.TextField()
@@ -22,10 +23,10 @@ class User(AbstractUser):
     )
     role = models.CharField(
         max_length=10, choices=ROLE_CHOICES, default="user")
-    phone = models.TextField(blank=True, null=False)
-    country = models.TextField(blank=True, null=False)
-    first_name = models.TextField(blank=True, null=True)
-    last_name = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=40, blank=True, null=False)
+    country = models.CharField(max_length=40, blank=True, null=False)
+    first_name = models.CharField(max_length=40, blank=True, null=True)
+    last_name = models.CharField(max_length=40, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
