@@ -3,10 +3,12 @@ from .models import Post, User
 
 
 class PostSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.username')
+    owner_username = serializers.ReadOnlyField(source='owner.username')
+    owner_role = serializers.ReadOnlyField(source='owner.role')
     class Meta:
         model = Post
-        fields = ['id', 'title', 'content', 'created_at']
+        fields = ['id', 'title', 'owner_role',
+                  'owner_username', 'content', 'created_at']
 
 
 class UserSerializer(serializers.ModelSerializer):
