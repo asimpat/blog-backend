@@ -8,6 +8,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import User
 from .serializers import PostSerializer, UserSerializer
+from .permission import IsOwnerOrAdminOrReadOnly
 
 
 
@@ -44,7 +45,7 @@ def login(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])  # only logged-in users
+@permission_classes([IsAuthenticated, IsOwnerOrAdminOrReadOnly])
 def post_details(request, pk):
     try:
         post = Post.objects.get(pk=pk)
