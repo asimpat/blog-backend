@@ -11,9 +11,8 @@ from .serializers import PostSerializer, UserSerializer
 from .permission import IsOwnerOrAdminOrReadOnly
 
 
-
 @api_view(['POST'])
-@permission_classes([AllowAny]) 
+@permission_classes([AllowAny])
 def register(request):
     username = request.data.get('username')
     password = request.data.get('password')
@@ -23,25 +22,13 @@ def register(request):
         return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
     if User.objects.filter(email=email).exists():
-        return Response({"error": "email already taken"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Email already taken"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Use create_user, which handles password hashing
     user = User.objects.create_user(
         username=username, password=password, email=email)
-    token, _ = Token.objects.get_or_create(user=user)
-    return Response({"message": "User registered", "token": token.key}, status=status.HTTP_201_CREATED)
 
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def login(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({"message": "Login successful", "token": token.key})
-    return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -52,27 +39,26 @@ def post_details(request, pk):
     except Post.DoesNotExist:
         return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    # GET - View a single post
+    # The permission class IsOwnerOrAdminOrReadOnly will handle access control here.
+    # We can simplify the view since the permission class does the heavy lifting.
     if request.method == 'GET':
+        # The user has permission to read
         serializer = PostSerializer(post)
         return Response(serializer.data)
 
-    # PUT - Update post (only owner or admin)
     elif request.method == 'PUT':
-        if request.user != post.owner and request.user.role != "admin":
-            return Response({"error": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
-        serializer = PostSerializer(post, data=request.data)
+        # The permission class will block this if the user is not the owner or admin.
+        serializer = PostSerializer(post, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # DELETE - Delete post (only owner or admin)
     elif request.method == 'DELETE':
-        if request.user != post.owner and request.user.role != "admin":
-            return Response({"error": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
+        # The permission class will block this if the user is not the owner or admin.
         post.delete()
         return Response({"message": "Post deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 
 @api_view(['GET', 'POST'])
