@@ -60,20 +60,18 @@ def post_details(request, pk):
         return Response({"message": "Post deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
-
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])  # only logged-in users
+@permission_classes([IsAuthenticated])
 def get_post(request):
-    # GET - List all posts
     if request.method == 'GET':
         posts = Post.objects.all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
-    # POST - Create a post (linked to logged-in user)
     elif request.method == 'POST':
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(owner=request.user)  # assign ownership
+            # request.user is available because of JWTAuthentication
+            serializer.save(owner=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
