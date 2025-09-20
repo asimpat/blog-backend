@@ -22,7 +22,7 @@ class User(AbstractUser):
         ("user", "User"),
     )
     role = models.CharField(
-        max_length=10, choices=ROLE_CHOICES, default="user")
+        max_length=10, choices=ROLE_CHOICES)
     phone = models.CharField(max_length=40, blank=True, null=False)
     country = models.CharField(max_length=40, blank=True, null=False)
     first_name = models.CharField(max_length=40, blank=True, null=True)

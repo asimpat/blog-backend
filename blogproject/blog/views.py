@@ -17,30 +17,36 @@ def register(request):
     username = request.data.get('username')
     password = request.data.get('password')
     email = request.data.get('email')
+    role = request.data.get('role', 'user')
 
     if not username or not password:
         return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
     if User.objects.filter(email=email).exists():
         return Response({"error": "Email already taken"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if role not in dict(User.ROLE_CHOICES):
+        return Response({"error": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST)
 
     # Use create_user, which handles password hashing
     user = User.objects.create_user(
-        username=username, password=password, email=email)
+        username=username, password=password, email=email, role=role)
 
-    return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
-
+    return Response({"message": f"{user} registered successfully"}, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated, IsOwnerOrAdminOrReadOnly])
+@permission_classes([IsAuthenticated])
 def post_details(request, pk):
     try:
         post = Post.objects.get(pk=pk)
     except Post.DoesNotExist:
         return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    # The permission class IsOwnerOrAdminOrReadOnly will handle access control here.
-    # We can simplify the view since the permission class does the heavy lifting.
+    permission = IsOwnerOrAdminOrReadOnly()
+    self_check = permission.has_object_permission(request, None, post)
+    if not self_check:
+        return Response({"error": "You do not have permission to edit this post"}, status=status.HTTP_403_FORBIDDEN)
+    
     if request.method == 'GET':
         # The user has permission to read
         serializer = PostSerializer(post)
