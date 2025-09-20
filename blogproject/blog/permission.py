@@ -9,3 +9,4 @@ class IsOwnerOrAdminOrReadOnly(BasePermission):
 
         # Write permissions are only allowed to the owner or admin
         return obj.owner == request.user or request.user.role == "admin"
+ 
